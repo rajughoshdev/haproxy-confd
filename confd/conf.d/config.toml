@@ -1,0 +1,14 @@
+[template]
+src = "config.cfg.tmpl"
+dest = "/usr/local/etc/haproxy/haproxy.cfg"
+
+keys = [
+    "/dev/mysql/readonly",
+    "/dev/mysql/master",
+]
+
+# These are the commands that will be used to check whether the rendered config is
+# valid and to reload the actual service once the new config is in place
+
+check_cmd = "/usr/local/sbin/haproxy -c -f {{ .src }}"
+reload_cmd = "/usr/local/sbin/haproxy -f /usr/local/etc/haproxy/haproxy.cfg -D -p /var/run/haproxy.pid -sf $(cat /var/run/haproxy.pid)"

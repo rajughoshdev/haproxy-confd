@@ -1,0 +1,45 @@
+global
+stats socket /var/run/haproxy.sock mode 600 level admin
+defaults
+log global
+retries 2
+timeout connect 3000
+timeout server 5000
+timeout client 5000
+listen stats 
+  bind :9000
+  mode http
+  stats enable
+  stats uri /stats
+
+ frontend mysql-slave 
+  bind *:3306
+  mode tcp
+  option tcp-check
+  balance roundrobin
+  default_backend mysql-slave
+
+ frontend mysql-master
+  bind *:3307
+  mode tcp
+  option tcp-check
+  balance roundrobin
+  default_backend mysql-master
+
+ backend mysql-slave
+ {{ range getvs "/dev/mysql/readonly/*" }}
+     server {{ . }}:3306 check inter 30000
+ {{ end }}
+    option redispatch
+    timeout client 3000
+    timeout server 5000
+    balance roundrobin
+
+ backend mysql-master
+ {{ range getvs "/dev/mysql/master/*" }}
+     server {{ . }}:3306 check inter 30000
+ {{ end }}
+    option redispatch
+    timeout client 3000
+    timeout server 5000
+    balance roundrobin
